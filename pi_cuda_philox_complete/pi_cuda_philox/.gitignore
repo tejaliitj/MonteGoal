@@ -1,0 +1,14 @@
+*.exe
+*.exp
+*.lib
+*.obj
+*.o
+*.ptx
+*.cubin
+
+tmpxft_*
+
+.vscode/
+
+__pycache__/
+*.pyc
