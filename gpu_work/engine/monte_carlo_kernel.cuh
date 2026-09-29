@@ -1,26 +1,28 @@
 #pragma once
 
-#include <curand_kernel.h>
+#include "philox_rng.cuh"
 
 // Generic one-trial-per-thread Monte Carlo kernel. This file has zero
 // domain knowledge and must stay that way -- the only thing it needs from
 // the caller is TrialFn: a callable (a struct with a __device__ operator())
-// that takes a Philox state and returns one ResultT per trial. Whatever
+// that takes an RngState* and returns one ResultT per trial. Whatever
 // "a trial" means -- a simulated tournament, a stock-price path, anything
-// else -- is entirely the caller's business.
+// else -- is entirely the caller's business. Which RNG is in use is entirely
+// philox_rng.cuh's business -- this file only ever calls rng_init(), never
+// names a specific generator.
 //
-// Every trial gets its own non-overlapping Philox subsequence: seed stays
-// fixed, counter_offset + thread_id gives each trial a distinct slot. This
-// is the same discipline PhiloxEngine used throughout the rehearsal phase,
-// generalized so the launch pattern itself is reusable, not just the RNG.
+// Every trial gets its own non-overlapping subsequence: seed stays fixed,
+// counter_offset + thread_id gives each trial a distinct slot. Same
+// discipline PhiloxEngine used throughout the rehearsal phase, generalized
+// so the launch pattern itself is reusable, not just the RNG.
 template <typename ResultT, typename TrialFn>
 __global__ void monte_carlo_kernel(unsigned long long seed, unsigned long long counter_offset,
                                     int num_trials, ResultT* results_out, TrialFn trial_fn) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx >= num_trials) return;
 
-    curandStatePhilox4_32_10_t state;
-    curand_init(seed, counter_offset + idx, 0, &state);
+    RngState state;
+    rng_init(seed, counter_offset + idx, 0, &state);
 
     results_out[idx] = trial_fn(&state);
 }

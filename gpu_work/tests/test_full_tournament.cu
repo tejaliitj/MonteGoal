@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     upload_tournament_data();
     upload_thirdplace_table();
     upload_bracket_data();
-    upload_lambda_matrix();
+    upload_lambda_matrix("data/lambda_matrix.csv");
 
     int *d_pts, *d_gf, *d_ga, *d_group_order, *d_slot_team_id;
     int *d_match_a, *d_match_b, *d_goals_a, *d_goals_b, *d_decided, *d_winner, *d_loser;

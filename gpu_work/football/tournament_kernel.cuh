@@ -1,6 +1,6 @@
 #pragma once
 
-#include <curand_kernel.h>
+#include "philox_rng.cuh"
 #include "group_stage.cuh"
 #include "standings.cuh"
 #include "third_place.cuh"
@@ -13,14 +13,14 @@
 // football-specific piece the generic engine (engine/monte_carlo_kernel.cuh)
 // ever touches -- everything about *how* trials run in parallel
 // (thread-per-trial, subsequence assignment, launch configuration) lives
-// there and knows nothing about football. Header-only, same as every other
-// logic file in football/ -- only the static *_data files need a .cu for
-// their single __constant__-memory definition point.
-//
-// Identical body to the old tournament_kernel.cu's per-thread logic --
-// nothing about the simulation itself changed, only how it's launched.
+// there and knows nothing about football. Takes an RngState* (whichever
+// generator engine/philox_rng.cuh currently defines) -- this file, like
+// every other file in football/, never names a specific RNG by type.
+// Header-only, same as every other logic file in football/ -- only the
+// static *_data files need a .cu for their single __constant__-memory
+// definition point.
 struct SimulateTournament {
-    __device__ int operator()(curandStatePhilox4_32_10_t* state) const {
+    __device__ int operator()(RngState* state) const {
         int team_pts[NUM_TEAMS] = {0};
         int team_gf[NUM_TEAMS] = {0};
         int team_ga[NUM_TEAMS] = {0};

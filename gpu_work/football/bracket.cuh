@@ -5,7 +5,7 @@
 #include "lambda_model.cuh"
 #include "poisson_sample.cuh"
 #include "shootout.cuh"
-#include <curand_kernel.h>
+#include "philox_rng.cuh"
 
 #define DECIDED_REGULATION 0
 #define DECIDED_EXTRA_TIME 1
@@ -33,7 +33,7 @@ __device__ __forceinline__ int resolve_spec(int type, int arg,
 // forward pass resolves every match_a/match_b before it's needed. All output
 // arrays are length NUM_KNOCKOUT_MATCHES, caller-owned. Direct device
 // equivalent of bracket_engine.py's simulate_knockout + _play_match.
-__device__ void simulate_knockout(curandStatePhilox4_32_10_t* state,
+__device__ void simulate_knockout(RngState* state,
                                    const int group_order[NUM_GROUPS][TEAMS_PER_GROUP],
                                    const int* slot_team_id,
                                    int* match_team_a, int* match_team_b,

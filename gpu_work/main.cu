@@ -7,20 +7,27 @@
 #include "tournament_data.cuh"
 #include "third_place_data.cuh"
 #include "bracket_data.cuh"
-#include "lambda_matrix.cuh"
 #include "cuda_check.cuh"
 #include "gpu_timer.cuh"
+#ifndef USE_ELO_ONLY_LAMBDA
+#include "lambda_matrix.cuh"
+#endif
 
 int main(int argc, char** argv) {
     int num_trials = (argc > 1) ? atoi(argv[1]) : 100000;
     unsigned long long seed = (argc > 2) ? (unsigned long long)atoll(argv[2]) : 42ULL;
+#ifndef USE_ELO_ONLY_LAMBDA
+    const char* lambda_csv_path = (argc > 3) ? argv[3] : "data/lambda_matrix.csv";
+#endif
 
     auto wall_start = std::chrono::high_resolution_clock::now();
 
     upload_tournament_data();
     upload_thirdplace_table();
     upload_bracket_data();
-    upload_lambda_matrix();
+#ifndef USE_ELO_ONLY_LAMBDA
+    upload_lambda_matrix(lambda_csv_path);
+#endif
 
     int* d_champion;
     CUDA_CHECK(cudaMalloc(&d_champion, num_trials * sizeof(int)));
@@ -54,7 +61,12 @@ int main(int argc, char** argv) {
         order[j + 1] = key;
     }
 
-    printf("=== MonteGoal: %d trials, seed %llu ===\n\n", num_trials, seed);
+    printf("=== MonteGoal: %d trials, seed %llu ===\n", num_trials, seed);
+#ifdef USE_ELO_ONLY_LAMBDA
+    printf("Lambda source: placeholder Elo-only formula (ablation baseline)\n\n");
+#else
+    printf("Lambda source: real trained model (%s)\n\n", lambda_csv_path);
+#endif
     printf("Champion probability (teams with at least one title):\n");
     for (int i = 0; i < NUM_TEAMS; ++i) {
         int t = order[i];

@@ -3,18 +3,19 @@
 #include "tournament_data.cuh"
 #include "lambda_model.cuh"
 #include "poisson_sample.cuh"
-#include <curand_kernel.h>
+#include "philox_rng.cuh"
 
-// Simulates all 72 group-stage fixtures for one trial, using the calling thread's
-// own Philox state (advanced internally -- caller just passes it in already
-// curand_init'd). Fills team_pts/team_gf/team_ga (length NUM_TEAMS, caller-owned,
-// must be zero-initialized) with each team's points, goals for, and goals against.
-// Also fills fixture_home_goals/fixture_away_goals (length NUM_GROUP_FIXTURES,
-// caller-owned) with this trial's actual per-match scores -- standings.cuh needs
-// these for head-to-head resolution, since aggregated team stats alone lose that.
-// Ranking and tiebreaking is standings.cuh's job, not this function's -- this is
-// the direct device equivalent of group_stage.py's simulate_group_matches + _table.
-__device__ void simulate_group_stage(curandStatePhilox4_32_10_t* state,
+// Simulates all 72 group-stage fixtures for one trial, using the calling
+// thread's own RngState (advanced internally -- caller just passes it in
+// already rng_init'd). Fills team_pts/team_gf/team_ga (length NUM_TEAMS,
+// caller-owned, must be zero-initialized) with each team's points, goals
+// for, and goals against. Also fills fixture_home_goals/fixture_away_goals
+// (length NUM_GROUP_FIXTURES, caller-owned) with this trial's actual
+// per-match scores -- standings.cuh needs these for head-to-head
+// resolution, since aggregated team stats alone lose that. Ranking and
+// tiebreaking is standings.cuh's job, not this function's -- this is the
+// direct device equivalent of group_stage.py's simulate_group_matches + _table.
+__device__ void simulate_group_stage(RngState* state,
                                       int* team_pts, int* team_gf, int* team_ga,
                                       int* fixture_home_goals, int* fixture_away_goals) {
     for (int f = 0; f < NUM_GROUP_FIXTURES; ++f) {

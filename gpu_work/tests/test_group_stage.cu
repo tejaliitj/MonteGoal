@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
     unsigned long long seed = 42ULL;
 
     upload_tournament_data();
-    upload_lambda_matrix();
+    upload_lambda_matrix("data/lambda_matrix.csv");
 
     // Analytic reference: every fixture's lambda is fixed (looked up from the
     // real trained-model matrix, same every trial), so the expected total goals
