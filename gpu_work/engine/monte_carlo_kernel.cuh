@@ -30,12 +30,13 @@ __global__ void monte_carlo_kernel(unsigned long long seed, unsigned long long c
 // Host launcher. trial_fn is passed by value -- fine as long as domain
 // functors stay small/stateless (as SimulateTournament is), since it becomes
 // a kernel argument copied to device, not something requiring a separate
-// upload step.
+// upload step. threads_per_block defaults to 128 (the value used everywhere
+// else so far); pass a different value to benchmark other block sizes.
 template <typename ResultT, typename TrialFn>
 void launch_monte_carlo(unsigned long long seed, unsigned long long counter_offset,
-                         int num_trials, ResultT* d_results_out, TrialFn trial_fn) {
-    int threads = 128;
-    int blocks = (num_trials + threads - 1) / threads;
-    monte_carlo_kernel<ResultT, TrialFn><<<blocks, threads>>>(
+                         int num_trials, ResultT* d_results_out, TrialFn trial_fn,
+                         int threads_per_block = 128) {
+    int blocks = (num_trials + threads_per_block - 1) / threads_per_block;
+    monte_carlo_kernel<ResultT, TrialFn><<<blocks, threads_per_block>>>(
         seed, counter_offset, num_trials, d_results_out, trial_fn);
 }
